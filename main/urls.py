@@ -1,18 +1,14 @@
 from django.urls import path
-from .views import show_main, product_list, product_add, product_detail
-from .views import products_json, product_json_by_id, products_xml, product_xml_by_id
+from main.views import show_main, create_product, show_product, show_xml, show_json, show_xml_by_id, show_json_by_id
 
 app_name = 'main'
 
 urlpatterns = [
-    path('', show_main, name='show_main'),  # ini yang harusnya jadi halaman utama
-    path('products/', product_list, name='product_list'),
-    path('products/add/', product_add, name='product_add'),
-    path('products/<int:pk>/', product_detail, name='product_detail'),
-
-    # API endpoints
-    path('json/', products_json, name='products_json'),
-    path('json/<int:pk>/', product_json_by_id, name='product_json_by_id'),
-    path('xml/', products_xml, name='products_xml'),
-    path('xml/<int:pk>/', product_xml_by_id, name='product_xml_by_id'),
+    path('', show_main, name='show_main'),
+    path('create-product/', create_product, name='create_product'),
+    path('product/<str:id>/', show_product, name='show_product'),
+    path('xml/', show_xml, name='show_xml'),
+    path('json/', show_json, name='show_json'),
+    path('xml/<str:product_id>/', show_xml_by_id, name='show_xml_by_id'),
+    path('json/<str:product_id>/', show_json_by_id, name='show_json_by_id')
 ]

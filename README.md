@@ -84,7 +84,7 @@ Tidak ada. Tutorial sudah memiliki intruksi yang jelas dan arahan dari tim asdos
 
 7. Mengakses keempat URL di poin 2 menggunakan Postman, membuat screenshot dari hasil akses URL pada Postman, dan menambahkannya ke dalam README.md.
 Jawab:
-![alt text](<Screenshot 2025-09-16 213837.png>)
-![alt text](<Screenshot 2025-09-16 213947.png>)
-![alt text](<Screenshot 2025-09-16 214018.png>)
-![alt text](<Screenshot 2025-09-16 214031.png>)
+![alt text](image.png)
+![alt text](image-1.png)
+![alt text](image-2.png)
+![alt text](image-3.png)

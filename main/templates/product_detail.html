@@ -1,16 +1,18 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Detail Produk</title>
-</head>
-<body>
-    <h1>{{ product.name }}</h1>
-    <p><strong>Harga:</strong> Rp{{ product.price }}</p>
-    <p><strong>Deskripsi:</strong> {{ product.description }}</p>
-    <p><strong>Kategori:</strong> {{ product.category }}</p>
-    <p><strong>Unggulan:</strong> {{ product.is_featured }}</p>
-    <p><img src="{{ product.thumbnail }}" alt="{{ product.name }}" width="200"></p>
+{% extends 'base.html' %}
+{% block content %}
+<p><a href="{% url 'main:show_main' %}"><button>← Back to Product List</button></a></p>
 
-    <a href="{% url 'main:product_list' %}">Kembali ke Daftar Produk</a>
-</body>
-</html>
+<h1>{{ product.name }}</h1>
+<p><b>{{ product.get_category_display }}</b>{% if product.is_featured %} | 
+    <b>Featured</b>{% endif %}{% if product.is_product_hot %} | 
+    <b>Hot</b>{% endif %} | <i>{{ product.created_at|date:"d M Y" }}</i> 
+    | Price: Rp {{ product.price }}</p>
+
+{% if product.thumbnail %}
+<img src="{{ product.thumbnail }}" alt="Product thumbnail" width="300">
+<br /><br />
+{% endif %}
+
+<p>{{ product.description }}</p>
+
+{% endblock content %}
