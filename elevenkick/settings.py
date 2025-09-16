@@ -34,6 +34,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'flora-cahaya-elevenkick.pbp.cs.ui.ac.id']
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://flora-cahaya-elevenkick.pbp.cs.ui.ac.id"
+]
+
 # Application definition
 
 INSTALLED_APPS = [
