@@ -9,3 +9,4 @@ class Product(models.Model):
     category = models.CharField()
     is_featured = models.BooleanField()
     date_added = models.DateField(auto_now_add=True)
+

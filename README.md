@@ -1,3 +1,5 @@
+--> TUGAS 3
+
 Membuat sebuah README.md yang berisi tautan menuju aplikasi PWS yang sudah di-deploy, serta jawaban dari beberapa pertanyaan berikut.
 
 - Tautan menuju aplikasi PWS yang sudah di-deploy: https://flora-cahaya-elevenkick.pbp.cs.ui.ac.id/
@@ -41,3 +43,48 @@ Django dijadikan permulaan pembelajaran pengembangan perangkat lunak, karena fra
 6. Apakah ada feedback untuk asisten dosen tutorial 1 yang telah kamu kerjakan sebelumnya?
 Jawab:
 Masih ada beberapa step yang kurang jelas dan terkadang membuat salah paham. Tetapi, secara keseluruhan, sudah bagus dan membantu saya dalam melaksanakan tutorial.
+
+--> TUGAS 3
+
+1. Jelaskan mengapa kita memerlukan data delivery dalam pengimplementasian sebuah platform?
+Jawab:
+Data delivery adalah proses pengiriman data dari sumber ke tujuan secara cepat, efisien, dan aman, baik melalui batch maupun real-time. Data delivery diperlukan dalam pengimplementasian sebuah platform, karena menjadi tulang punggung komunikasi antar komponen, misalnya antara frontend dan backend atau antar layanan dalam arsitektur microservices. Dengan adanya mekanisme pengiriman data seperti API yang menggunakan format JSON atau XML, platform dapat memastikan pertukaran informasi berjalan konsisten, terstruktur, dan dapat dipahami oleh sistem lain. Selain itu, data delivery juga mendukung skalabilitas, menjaga integritas data, serta memungkinkan integrasi dengan layanan eksternal maupun pihak ketiga. Tanpa adanya proses ini, platform tidak dapat berjalan secara optimal karena data tidak dapat diteruskan dengan lancar untuk mendukung fungsi bisnis maupun pengalaman pengguna.
+
+2. Menurutmu, mana yang lebih baik antara XML dan JSON? Mengapa JSON lebih populer dibandingkan XML?
+Jawab:
+JSON (JavaScript Object Notation) dan XML (eXtensible Markup Language) sama-sama digunakan untuk pertukaran data, tetapi keduanya punya kelebihan dan kekurangan masing-masing. JSON lebih ringkas dan mudah dibaca oleh manusia, serta langsung bisa digunakan di JavaScript tanpa konfigurasi tambahan. Karena ukurannya lebih kecil, data yang dikirim lebih cepat sampai dan efisien. Banyak framework dan library modern juga mendukung JSON, sehingga penggunaannya lebih praktis. Kekurangannya, JSON kurang cocok untuk dokumen yang sangat kompleks, karena tidak punya fitur, seperti namespace atau mixed content, meskipun ada JSON Schema untuk membantu validasi. XML lebih kuat untuk dokumen yang kompleks karena mendukung namespace, atribut, dan bisa divalidasi dengan skema yang ketat (XSD). Namun, XML biasanya lebih panjang, lebih berat saat diproses, dan tidak sepraktis JSON di web modern.
+
+-> Kesimpulan:
+JSON lebih baik untuk kebanyakan aplikasi modern, karena lebih ringan, cepat, mudah dibaca, dan langsung kompatibel dengan JavaScript, sehingga membuat pengembangan web lebih efisien. XML masih berguna di beberapa kasus khusus, seperti dokumen kompleks atau sistem lama, tetapi secara umum JSON jauh lebih populer dibandingkan XML di era web dan API modern.
+
+3. Jelaskan fungsi dari method is_valid() pada form Django dan mengapa kita membutuhkan method tersebut?
+Jawab:
+Method is_valid() pada form Django digunakan untuk memeriksa apakah data yang di-submit pengguna sudah sesuai dengan aturan validasi yang ditentukan. Jika is_valid() mengembalikan nilai True, berarti seluruh field telah diisi dengan benar (misalnya field angka diisi dengan angka, field wajib tidak kosong, atau format email sesuai). Jika False, Django akan menyimpan pesan error pada form sehingga bisa ditampilkan kembali kepada pengguna. Method ini penting, karena memastikan hanya data yang valid yang boleh diproses lebih lanjut atau disimpan ke database, sehingga menjaga integritas data sekaligus mencegah error maupun potensi kerusakan pada aplikasi.
+
+4. Mengapa kita membutuhkan csrf_token saat membuat form di Django? Apa yang dapat terjadi jika kita tidak menambahkan csrf_token pada form Django? Bagaimana hal tersebut dapat dimanfaatkan oleh penyerang?
+Jawab:
+csrf_token dibutuhkan dalam form Django untuk melindungi aplikasi dari serangan CSRF (Cross-Site Request Forgery), yaitu serangan di mana penyerang membuat pengguna yang sedang login tanpa sadar mengirimkan request berbahaya ke aplikasi, misalnya transfer uang, penghapusan data, atau pembelian barang. Jika form tidak menggunakan csrf_token, penyerang dapat membuat form palsu di website lain dan memanfaatkan sesi login pengguna agar request tersebut dianggap sah oleh server. Dengan adanya csrf_token, setiap form akan memiliki kode unik yang terikat pada session pengguna, sehingga request palsu yang tidak memiliki token valid akan otomatis ditolak. Hal ini membuat aplikasi lebih aman dari eksploitasi yang memanfaatkan identitas pengguna.
+
+5. Jelaskan bagaimana cara kamu mengimplementasikan checklist di atas secara step-by-step (bukan hanya sekadar mengikuti tutorial).
+Jawab:
+1) Pertama, aku membuat empat fungsi baru di views.py. Tujuannya supaya data produk yang tersimpan di database bisa diakses dalam format XML dan JSON. Ada dua jenis untuk masing-masing format: satu untuk menampilkan semua data, dan satu lagi untuk menampilkan data berdasarkan ID tertentu. Jadi misalnya kalau aku buka /products/json/, maka semua produk keluar dalam format JSON. Sedangkan kalau aku buka /products/json/1/, maka hanya produk dengan ID = 1 saja yang ditampilkan dalam format JSON. Hal yang sama berlaku juga untuk XML. Fungsi ini dibuat dengan memanfaatkan serializers dari Django.
+2) Setelah fungsi views selesai, aku sambungkan ke routing di urls.py pada direktori main. Di sana aku tambahkan path:
+path('products/json/', products_json, name='products_json'),
+path('products/json/<int:pk>/', product_json_by_id, name='product_json_by_id'),
+path('products/xml/', products_xml, name='products_xml'),
+path('products/xml/<int:pk>/', product_xml_by_id, name='product_xml_by_id'),
+Dengan begitu, setiap fungsi yang ada di views.py bisa dipanggil lewat browser atau Postman menggunakan URL tertentu. Jadi lebih jelas dan terstruktur.
+3) Berikutnya, aku membuat halaman untuk menampilkan daftar produk. Halaman ini berupa template product_list.html yang berisi semua produk dalam bentuk list. Di setiap produk ada tombol Detail untuk melihat informasi lengkap produk tersebut, dan di bagian atas ada tombol Add untuk menambahkan produk baru. Dengan begitu, user bisa melihat data yang sudah ada sekaligus menambahkan data baru.
+4) Supaya user bisa menambahkan data, aku membuat file forms.py yang berisi ProductForm. Form ini mengambil field-field dari model Product (seperti name, price, description, thumbnail, category, dan is_featured). Lalu aku buat template product_form.html untuk menampilkan form input. Ketika tombol Add diklik, user akan diarahkan ke halaman form ini. Setelah data diisi dan disubmit, produk otomatis tersimpan ke database. Jangan lupa sebelumnya dilakukan makemigrations dan migrate supaya model benar-benar tersimpan di database.
+5) Untuk detail produk, aku membuat fungsi product_detail di views.py. Fungsinya mengambil data produk berdasarkan pk menggunakan get_object_or_404(Product, pk=pk). Kemudian data produk tersebut dikirimkan ke template product_detail.html. Di halaman detail, aku menampilkan informasi lengkap seperti nama produk, harga, deskripsi, kategori, thumbnail, dan status unggulan. Di bagian bawah halaman detail, aku tambahkan tombol Back to Product List supaya user bisa kembali ke daftar produk.
+
+6. Apakah ada feedback untuk asdos di tutorial 2 yang sudah kalian kerjakan?
+Jawab:
+Tidak ada. Tutorial sudah memiliki intruksi yang jelas dan arahan dari tim asdos juga sudah sangat membantu.
+
+7. Mengakses keempat URL di poin 2 menggunakan Postman, membuat screenshot dari hasil akses URL pada Postman, dan menambahkannya ke dalam README.md.
+Jawab:
+![alt text](<Screenshot 2025-09-16 202545.png>)
+![alt text](<Screenshot 2025-09-16 202710.png>)
+![alt text](<Screenshot 2025-09-16 202758.png>)
+![alt text](<Screenshot 2025-09-16 203041.png>)

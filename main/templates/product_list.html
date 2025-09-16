@@ -1,0 +1,26 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Daftar Produk</title>
+</head>
+<body>
+    <h1>Daftar Produk</h1>
+
+    <!-- Tombol Add -->
+    <a href="{% url 'main:product_add' %}">Add</a>
+
+    <ul>
+    {% for product in products %}
+        <li>
+            <strong>{{ product.name }}</strong> - Rp{{ product.price }}
+            <!-- Tombol Detail -->
+            <a href="{% url 'main:product_detail' product.pk %}">Detail</a>
+
+        </li>
+    {% empty %}
+        <li>Belum ada produk.</li>
+    {% endfor %}
+    </ul>
+</body>
+</html>
