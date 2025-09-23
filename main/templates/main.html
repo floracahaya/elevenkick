@@ -1,19 +1,35 @@
 <h1>{{ nama_aplikasi }}</h1>
 
-<h5>Name:</h5>
-<p>{{ name }}</p>
+<h3>Name: {{ name }}</h3>
 
-<h5>Class:</h5>
-<p>{{ class }}</p>
+<h3>Class: {{ class }}</h3>
+
+<h3>NPM: {{ npm }}</h3>
 
 <a href="{% url 'main:create_product' %}">
   <button>+ Add Product</button>
 </a>
 
+<a href="{% url 'main:logout' %}">
+  <button>Logout</button>
+</a>
+<h5>Sesi terakhir login: {{ last_login }}</h5>
 <hr>
 
+<a href="?filter=all">
+    <button type="button">All Product</button>
+</a>
+<a href="?filter=my">
+    <button type="button">My Product</button>
+</a> 
+
+<div style="margin-top: 15px; font-family: 'Trebuchet MS', Arial, sans-serif; font-weight: bold; font-size: 18px; color: #b30000;">
+    Welcome to ElevenKick, {{ username }}! ⭐ <br>
+    We’re excited to have you here. Ready to kickstart your shopping journey? 
+</div>
+
 {% if not product_list %}
-<p>Belum ada data apapun pada ElevenKick.</p>
+<p>Belum ada data apapun pada RedUnited Store.</p>
 {% else %}
 
 {% for product in product_list %}
@@ -36,6 +52,6 @@
 </div>
 
 <hr>
-{% endfor %}
+{% endfor %}
 
-{% endif %}
+{% endif %}
