@@ -103,7 +103,7 @@ AuthenticationForm adalah form bawaan dari Django yang dipakai untuk proses aute
 2) Pesan error bawaan cenderung generik, misalnya hanya bilang “username atau password salah” tanpa detail. Kalau butuh pesan khusus, perlu di-override.
 3) Tidak fleksibel untuk kebutuhan tertentu, misalnya login pakai email atau sistem autentikasi kustom. Pada kasus itu form perlu dimodifikasi agar cocok dengan model user yang digunakan.
 
-2. Apa perbedaan antara autentikasi dan otorisasi? Bagaiamana Django mengimplementasikan kedua konsep tersebut?
+2. Apa perbedaan antara autentikasi dan otorisasi? Bagaimana Django mengimplementasikan kedua konsep tersebut?
 Jawab:
 Autentikasi adalah proses untuk memastikan identitas seorang pengguna, apakah benar orang tersebut adalah pemilik akun yang sah. Contohnya, login dengan username dan password atau verifikasi identitas. Di Django, autentikasi ditangani oleh modul django.contrib.auth yang menyediakan model User serta fungsi, seperti authenticate(), login(), dan logout(). Selain itu, AuthenticationMiddleware akan otomatis mengaitkan setiap request dengan user yang sedang login, atau menganggapnya sebagai anonymous user jika belum masuk. Otorisasi, di sisi lain, merupakan langkah lanjutan setelah autentikasi. Tahap ini menentukan apakah pengguna yang sudah diverifikasi punya izin buat melakukan tindakan tertentu. Misalnya, apakah seorang user diperbolehkan menghapus postingan, mengakses dashboard admin, atau mengubah data. Django menyediakan sistem permissions dan groups untuk atur hal ini. Permissions atur aksi yang bisa dilakukan pengguna (tambah, ubah, hapus), sedangkan groups memudahkan pengelolaan izin untuk banyak user sekaligus. Untuk membatasi akses pada view, Django juga menyediakan dekorator, seperti login_required dan mixin, seperti PermissionRequiredMixin.
 
@@ -118,7 +118,150 @@ Secara default, cookies dalam web development tidak bisa dianggap sepenuhnya ama
 
 5. Jelaskan bagaimana cara kamu mengimplementasikan checklist di atas secara step-by-step (bukan hanya sekadar mengikuti tutorial).
 Jawab:
-1) Proses autentikasi di Django dimulai dari fungsi register, yang memanfaatkan UserCreationForm untuk membuat akun baru. Jika form lolos validasi, akun akan disimpan lalu pengguna dialihkan ke halaman login. Pada fungsi login_user, AuthenticationForm digunakan untuk memverifikasi kombinasi username dan password. Jika benar, maka login(request, user) dijalankan sehingga Django membuat session sekaligus menyimpan cookie, seperti last_login dan username, yang kemudian bisaditampilkan di halaman utama. Untuk keluar dari akun, fungsi logout_user memanggil logout(request) agar session terhapus, lalu cookie terkait juga dihapus sebelum pengguna diarahkan kembali ke halaman login. Agar hanya pengguna terautentikasi yang bisa mengakses halaman tertentu, dekorator @login_required(login_url='/login') ditambahkan pada view (misalnya show_main atau show_product), sehingga pengguna yang belum login otomatis diarahkan ke halaman login.
+1) Proses autentikasi di Django dimulai dari fungsi register, yang memanfaatkan UserCreationForm untuk membuat akun baru. Jika form lolos validasi, akun akan disimpan lalu pengguna dialihkan ke halaman login. Pada fungsi login_user, AuthenticationForm digunakan untuk memverifikasi kombinasi username dan password. Jika benar, maka login(request, user) dijalankan sehingga Django membuat session sekaligus menyimpan cookie, seperti last_login dan username, yang kemudian bisa ditampilkan di halaman utama. Untuk keluar dari akun, fungsi logout_user memanggil logout(request) agar session terhapus, lalu cookie terkait juga dihapus sebelum pengguna diarahkan kembali ke halaman login. Agar hanya pengguna terautentikasi yang bisa mengakses halaman tertentu, dekorator @login_required(login_url='/login') ditambahkan pada view (misalnya show_main atau show_product), sehingga pengguna yang belum login otomatis diarahkan ke halaman login.
 2) Jalankan aplikasi dengan perintah python manage.py runserver dan akses melalui localhost. Pada halaman login, pilih opsi registrasi untuk buat dua akun baru, lalu kembali ke halaman login. Selanjutnya, login menggunakan akun pertama, kemudian tambahkan tiga produk berbeda melalui tombol Add Product. Setelah itu, logout dari akun pertama dan ulangi proses login dengan akun kedua untuk melakukan hal serupa.
 3) Relasi antara produk dan pengguna dibangun dengan menambahkan field user = models.ForeignKey(User, on_delete=models.CASCADE, null=True) pada models.py. Field ini menyatakan bahwa setiap produk terhubung dengan satu objek User, yaitu pemilik produk tersebut. Karena memakai ForeignKey, maka relasi yang terbentuk adalah many-to-one, artinya satu pengguna bisa punya banyak produk. Argumen on_delete=models.CASCADE memastikan bahwa apabila pengguna dihapus, seluruh produk miliknya juga akan ikut terhapus, sehingga integritas data tetap terjaga.
 4) Untuk menampilkan informasi pengguna yang sedang login sekaligus memanfaatkan cookie, beberapa langkah dilakukan. Pertama, tambahkan data username ke dalam context, dengan nilai diambil dari cookie username, atau fallback ke request.user.username jika cookie belum ada. Kedua, setelah login berhasil, simpan username ke dalam cookie menggunakan response.set_cookie('username', user.username), agar bisa dipanggil kembali di halaman utama. Ketiga, saat logout, cookie tersebut dihapus dengan response.delete_cookie('username'). Terakhir, di template utama, tampilkan sapaan personal dengan menggunakan {{ username }}. Dengan mekanisme ini, aplikasi bisa memberikan pengalaman lebih interaktif dan memastikan cookie dikelola sesuai status login maupun logout.
+
+--> TUGAS 5
+1.  Jika terdapat beberapa CSS selector untuk suatu elemen HTML, jelaskan urutan prioritas pengambilan CSS selector tersebut!
+Jawab:
+CSS selector untuk suatu elemen HTML adalah aturan yang digunakan untuk memilih elemen tertentu dalam halaman web agar bisa diberikan style. Satu elemen HTML bisa dipengaruhi oleh banyak selector sekaligus, misalnya melalui tag name, class, ID, atau bahkan inline style. Ketika ada beberapa aturan yang bertabrakan (misalnya sama-sama mengatur warna teks), browser akan menentukan prioritas berdasarkan CSS specificity. Urutan Prioritas CSS Selector (dari paling rendah ke paling tinggi), yaitu:
+1) Selector universal (*), nilai specificity paling rendah (sering dianggap 0).
+2) Element selector / pseudo-elemen, bobotnya rendah, seperti div, p, atau h1, dan nilai specificity-nya adalah 0, 0, 1.
+3) Class selector, attribute selector, dan pseudo-class, contohnya seperti .container, :hover, atau [type="text"] yang punya nilai specificity 0, 1, 0.
+4) ID selector,  contohnya #header punya nilai specificity 1, 0, 0.
+5) Inline style, style yang ditulis langsung dalam atribut style pada elemen HTML, contohnya <h1 style="color: red;">, nilai specificity-nya adalah 1, 0, 0, 0. 
+6) !important, bukan bagian dari specificity, tapi akan mengalahkan semua aturan lain kecuali ada aturan lain juga dengan !important.
+
+Sumber: https://www.easycoding.id/blog/urutan-prioritas-selector-css-specificity-panduan-lengkap-untuk-memahami-dan-menggunakan
+
+2. Mengapa responsive design menjadi konsep yang penting dalam pengembangan aplikasi web? Berikan contoh aplikasi yang sudah dan belum menerapkan responsive design, serta jelaskan mengapa!
+Jawab:
+Responsive design penting dalam pengembangan aplikasi web karena mampu meningkatkan pengalaman pengguna (user experience). Menurut WebFX, responsive design membuat tampilan konten otomatis menyesuaikan ukuran layar sehingga pengguna tidak perlu melakukan zoom atau scroll horizontal. Designmodo juga menegaskan bahwa desain yang responsif membuat interaksi lebih nyaman dan intuitif. Selain itu, responsive design memungkinkan penyesuaian terhadap berbagai perangkat dan resolusi layar tanpa harus membuat versi terpisah, sehingga satu website bisa fleksibel digunakan di HP, tablet, laptop, hingga layar besar. Dari sisi teknis, WebFX menjelaskan bahwa desain responsif mendukung mobile-friendliness yang menjadi salah satu faktor peringkat Google, serta menghemat biaya pengembangan karena hanya membutuhkan satu basis desain yang dapat digunakan lintas perangkat.
+
+Designmodo menambahkan bahwa responsive design membantu menjaga konsistensi merek di berbagai perangkat, sehingga identitas visual tetap kuat dan pengguna tidak bingung saat berpindah perangkat. Selain itu, desain yang responsif juga dapat menurunkan tingkat bounce dan meningkatkan konversi, karena pengguna merasa lebih nyaman, bertahan lebih lama di website, dan terdorong melakukan interaksi seperti membeli atau mendaftar. Dengan demikian, responsive design bukan hanya penting untuk kenyamanan pengguna, tetapi juga memberikan keuntungan nyata bagi keberlangsungan dan pertumbuhan aplikasi web.
+
+Contoh aplikasi atau website yang sudah menerapkan responsive design adalah The Boston Globe. Situs berita ini berhasil menyesuaikan tata letak konten, ukuran gambar, dan navigasi sehingga tetap nyaman diakses baik melalui desktop maupun perangkat mobile. Begitu juga dengan Dropbox, yang tampilannya sederhana dan fleksibel, membuat pengguna mudah mengakses layanan di berbagai perangkat. Penerapan responsive design ini membantu menjaga konsistensi merek sekaligus meningkatkan keterlibatan pengguna.
+
+Di sisi lain, masih ada aplikasi atau website yang belum sepenuhnya menerapkan responsive design, misalnya beberapa situs institusi pemerintah yang ketika diakses melalui smartphone menampilkan teks terlalu kecil, gambar meluber, atau navigasi yang sulit digunakan. Hal ini biasanya disebabkan penggunaan template lama yang tidak mendukung desain adaptif, keterbatasan anggaran, atau kurangnya perhatian terhadap pengalaman pengguna mobile. Akibatnya, website menjadi sulit digunakan, meningkatkan kemungkinan pengunjung keluar lebih cepat (bounce rate), dan menurunkan efektivitas tujuan dari aplikasi atau website tersebut.
+
+Sumber: https://www.webfx.com/web-design/learn/why-responsive-design-important/ https://designmodo.com/responsive-design-examples/
+
+3.  Jelaskan perbedaan antara margin, border, dan padding, serta cara untuk mengimplementasikan ketiga hal tersebut!
+Jawab:
+Margin, border, dan padding adalah tiga bagian penting dalam CSS box model yang mengatur ruang di sekitar elemen. Margin adalah ruang di luar border elemen yang berfungsi mengatur jarak antar elemen, sehingga jika ingin memberi jarak antar elemen, digunakanlah margin. Border merupakan garis tepi yang mengelilingi elemen, membatasi area padding dan konten, dan posisinya berada di antara margin dan padding. Sementara itu, padding adalah ruang di dalam border, yaitu jarak antara isi elemen dan garis tepinya, sehingga konten tidak menempel langsung pada border.
+
+Dalam analoginya, konten digambarkan sebagai panda, border sebagai pillowcase, padding sebagai ruang antara panda dan pillowcase, sedangkan margin adalah ruang di luar pillowcase. Dengan demikian, urutannya dari dalam ke luar adalah: konten → padding → border → margin.
+
+Cara mengimplementasikan margin, border, dan padding, yaitu:
+/* Mengatur margin */
+.element {
+  margin: 20px;           /* semua sisi margin = 20px */
+  margin-top: 10px;       /* margin atas */
+  margin-right: 15px;     /* margin kanan */
+  margin-bottom: 10px;    /* margin bawah */
+  margin-left: 5px;       /* margin kiri */
+}
+
+/* Mengatur padding */
+.element {
+  padding: 20px;           /* semua sisi padding = 20px */
+  padding-top: 10px;       /* padding atas */
+  padding-right: 15px;     /* padding kanan */
+  padding-bottom: 10px;    /* padding bawah */
+  padding-left: 5px;       /* padding kiri */
+}
+
+/* Mengatur border */
+.element {
+  border: 2px solid black;       /* border dengan ketebalan 2px, garis padat, warna hitam */
+  border-top: 1px dashed red;    /* contoh border sisi atas khusus */
+  border-radius: 5px;            /* contoh membuat sudut melengkung */
+}
+Dalam penerapannya, margin dan padding dapat dituliskan dengan 1 hingga 4 nilai sekaligus. Jika hanya satu nilai, maka berlaku untuk semua sisi. jika dua nilai, maka nilai pertama untuk atas & bawah, dan nilai kedua untuk kiri & kanan. jika tiga nilai, maka urutannya atas, kanan & kiri, lalu bawah, sedangkan empat nilai ditulis urut searah jarum jam: atas, kanan, bawah, kiri. Selain itu, margin dan padding juga bisa diatur secara spesifik menggunakan properti, seperti margin-top, margin-right, margin-bottom, margin-left, maupun padding- untuk sisi tertentu. Sementara itu, border dapat disesuaikan dengan gaya (misalnya solid, dashed, atau dotted), warna, dan ketebalan. Semua implementasi ini bisa ditulis dalam file CSS terpisah, di dalam tag <style> pada HTML, atau menggunakan inline style langsung pada elemen HTML, meskipun penggunaan inline style umumnya kurang disarankan karena menyulitkan proses pemeliharaan kode.
+
+Sumber: https://www.howtocanvas.com/create-amazing-pages-in-canvas/margins-and-padding
+
+4. Jelaskan konsep flex box dan grid layout beserta kegunaannya!
+Jawab:
+Flexbox (Flexible Box) adalah sistem layout satu dimensi yang dirancang untuk menyusun elemen-elemen dalam suatu kontainer baik secara horizontal (baris) maupun vertikal (kolom). Dengan Flexbox, setiap item dalam sebuah kontainer bisa diatur perataan (alignment)-nya, distribusi ruang kosong, hingga kemampuan item untuk tumbuh (grow) atau menyusut (shrink) agar menyesuaikan ukuran kontainer. Kelebihan utama Flexbox adalah fleksibilitas dalam mengatur elemen-elemen kecil atau komponen yang biasanya ditampilkan secara linear. Contoh kegunaannya termasuk menyusun navigasi horizontal, menata tombol dalam satu baris, atau membuat daftar kartu produk yang ukurannya dapat menyesuaikan ruang layar.
+
+Sedangkan, Grid Layout adalah sistem layout dua dimensi yang memungkinkan pengaturan elemen dalam baris dan kolom sekaligus. Grid menyediakan kerangka kerja yang lebih terstruktur untuk membuat tata letak halaman yang kompleks, seperti mengatur posisi header di atas, sidebar di samping, area konten utama di tengah, dan footer di bawah. Grid memudahkan developer untuk mendesain layout modular dengan kontrol penuh atas ukuran baris/kolom, jarak antar elemen, hingga penggabungan sel (cell spanning). Kelebihannya ada pada kemampuannya menciptakan layout besar yang rapi, konsisten, dan mudah diskalakan untuk berbagai ukuran layar.
+
+Karena sifatnya berbeda, masing-masing sistem punya kegunaannya sendiri. Flexbox paling efektif dipakai untuk tata letak yang sederhana dan mengalir dalam satu arah, sedangkan Grid unggul untuk tata letak yang lebih besar, terstruktur, dan melibatkan baris sekaligus kolom. Dalam praktiknya, banyak pengembang menggabungkan keduanya, Grid digunakan untuk kerangka utama halaman, lalu di dalam setiap area Grid, Flexbox dipakai untuk menyusun elemen internal secara lebih fleksibel. Dengan begitu, halaman web bisa mendapatkan manfaat terbaik dari kedua sistem layout ini.
+
+Sumber: https://zerotomastery.io/blog/css-grid-vs-flexbox/
+
+
+5. Jelaskan bagaimana cara kamu mengimplementasikan checklist di atas secara step-by-step (bukan hanya sekadar mengikuti tutorial)!
+Jawab:
+
+1) Integrasi Tailwind ke Proyek
+- Buka file base.html pada folder templates di root project.
+- Tambahkan link Tailwind CDN di dalam tag <head>.
+
+<head>
+  {% block meta %}
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% endblock meta %}
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+2) Buat Fitur Edit Product
+- Di file views.py (subdirektori main), tambahin fungsi baru namanya edit_product yang menerima parameter request dan id.
+- Buat template baru namanya edit_product.html di main/templates/.
+- Buka urls.py dalam direktori main, lalu import fungsi edit_product yang udah dibuat.
+- Tambahin route baru pada urlpatterns untuk menghubungkan URL dengan fungsi tersebut.
+- Pada file main.html, perbarui looping product_list agar tiap produk nampilin tombol Edit, yang hanya terlihat oleh user yang login dan merupakan pemilik produk.
+
+3) Buat Fitur Delete Product
+- Tambahin fungsi delete_product di views.py (folder main) untuk menghapus data produk berdasarkan id.
+- Import fungsi ini ke dalam urls.py.
+- Tambahin path baru pada urlpatterns untuk manggil fungsi delete.
+- Pada main.html, tambahin tombol Delete di dalam loop product_list untuk tiap produk.
+
+4) Tambahin Navigation Bar
+- Buat file baru namanya navbar.html pada folder templates/ di root project.
+- Isi dengan struktur HTML untuk navigasi.
+- Hubungin ke main.html (dalam main/templates/) pakai tag {% include %} agar navbar muncul di setiap halaman yang diinginkan.
+
+5) Konfigurasi Static Files
+- Tambahin WhiteNoise Middleware pada settings.py agar file statis bisa dilayani dengan baik.
+- Pastiin konfigurasi variabel statis sudah sesuai:
+STATIC_URL = '/static/'
+
+if DEBUG:
+    STATICFILES_DIRS = [
+        BASE_DIR / 'static'
+    ]
+else:
+    STATIC_ROOT = BASE_DIR / 'static'
+
+6) Styling Aplikasi dengan Tailwind + CSS Eksternal
+- Buat file global.css di folder /static/css/ pada root project.
+- Hubungin global.css dan Tailwind ke dalam base.html.
+- Tambahin custom styling ke dalam static/css/global.css.
+- Lakuin kustomisasi tampilan di beberapa bagian aplikasi:
+    - Navbar → perbarui desain di navbar.html.
+    - Login Page → edit login.html di main/templates/.
+    - Register Page → ubah register.html di main/templates/.
+    - Halaman Home →
+        - Buat card_product.html di main/templates/.
+        - Siapin gambar default no-product.png di /static/image/.
+        - Pakai card_product.html dan no-product.png pada main.html.
+    - Detail Product → update product_detail.html.
+    - Create Product → update create_product.html.
+    - Edit Product → ganti desain pada edit_product.html.
+
+7) Menjalankan Aplikasi
+Jalankan server lokal dengan: python manage.py runserver
+
+8) Push ke GitHub dan PWS
+Simpan perubahan lalu masukan ke repository dan PWS:
+git add .
+git commit -m "<pesan commit>"
+git push origin master
+git push pws master
+

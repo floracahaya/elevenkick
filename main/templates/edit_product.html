@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block meta %}
-<title>Create Product - ElevenKick</title>
+<title>Edit Product - ElevenKick Store</title>
 {% endblock meta %}
 
 {% block content %}
@@ -15,24 +17,24 @@
     </div>
     
     <!-- Form -->
-    <div class="bg-blue-900 rounded-lg border border-gray-500 p-6 sm:p-8 form-style">
+    <div class="bg-blue-900 rounded-lg border border-gray-200 p-6 sm:p-8 form-style">
       <div class="mb-8">
-        <h1 class="text-2xl font-bold text-blue-100 mb-2">Create New Product</h1>
-        <p class="text-white">Share your ElevenKick product and stories with the community</p>
+        <h1 class="text-2xl font-bold text-blue-100 mb-2">Edit Product</h1>
+        <p class="text-gray-100">Update your ElevenKick product and stories</p>
       </div>
       
       <form method="POST" class="space-y-6">
         {% csrf_token %}
         {% for field in form %}
           <div>
-            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-white mb-2">
+            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-100 mb-2">
               {{ field.label }}
             </label>
             <div class="w-full">
               {{ field }}
             </div>
             {% if field.help_text %}
-              <p class="mt-1 text-sm text-gray-900">{{ field.help_text }}</p>
+              <p class="mt-1 text-sm text-gray-500">{{ field.help_text }}</p>
             {% endif %}
             {% for error in field.errors %}
               <p class="mt-1 text-sm text-red-600">{{ error }}</p>
@@ -41,11 +43,11 @@
         {% endfor %}
         
         <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
-          <a href="{% url 'main:show_main' %}" class="order-2 sm:order-1 px-6 py-3 border border-gray-500 text-white rounded-md font-medium hover:bg-blue-300 transition-colors text-center">
+          <a href="{% url 'main:show_main' %}" class="order-2 sm:order-1 px-6 py-3 border border-gray-300 text-gray-100 rounded-md font-medium hover:bg-blue-600 transition-colors text-center">
             Cancel
           </a>
           <button type="submit" class="order-1 sm:order-2 flex-1 bg-blue-100 text-blue-900 px-6 py-3 rounded-md font-medium hover:bg-blue-300 transition-colors">
-          ElevenKick product
+            Update Product
           </button>
         </div>
       </form>
