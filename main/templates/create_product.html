@@ -21,35 +21,178 @@
         <p class="text-white">Share your ElevenKick product and stories with the community</p>
       </div>
       
-      <form method="POST" class="space-y-6">
+     <!-- Keep server-side form for direct page access -->
+      <form method="POST" class="space-y-6" id="createProductPageForm">
         {% csrf_token %}
         {% for field in form %}
           <div>
-            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-white mb-2">
+            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-[#395886] mb-2">
               {{ field.label }}
             </label>
             <div class="w-full">
               {{ field }}
             </div>
             {% if field.help_text %}
-              <p class="mt-1 text-sm text-gray-900">{{ field.help_text }}</p>
+              <p class="mt-1 text-sm text-gray-500">{{ field.help_text }}</p>
             {% endif %}
             {% for error in field.errors %}
               <p class="mt-1 text-sm text-red-600">{{ error }}</p>
             {% endfor %}
           </div>
         {% endfor %}
-        
+
         <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
-          <a href="{% url 'main:show_main' %}" class="order-2 sm:order-1 px-6 py-3 border border-gray-500 text-white rounded-md font-medium hover:bg-blue-300 transition-colors text-center">
+          <a href="{% url 'main:show_main' %}" class="order-2 sm:order-1 bg-white px-6 py-3 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-[#B1C9EF] transition-colors text-center">
             Cancel
           </a>
-          <button type="submit" class="order-1 sm:order-2 flex-1 bg-blue-100 text-blue-900 px-6 py-3 rounded-md font-medium hover:bg-blue-300 transition-colors">
-          ElevenKick product
+          <button type="submit" id="publishProductPageBtn" class="order-1 sm:order-2 flex-1 bg-[#2F80E4] text-white px-6 py-3 rounded-md font-medium hover:bg-[#395886] transition-colors">
+            Publish Product⌯⌲
           </button>
         </div>
       </form>
     </div>
+
   </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+/*
+  AJAX & modal handlers for Create / Update product.
+  - submitProductEntryAjax() handles create (POST => add_product_entry_ajax) and update (POST => update_product_ajax/<id>)
+  - openEditModal(productId) fetches JSON and populates modal then showModal('edit')
+  - form in templates/modal.html has id="productForm" and this script will attach handler to it.
+*/
+
+// helper: read cookie (used for CSRF header)
+function getCookie(name) {
+  const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+  return v ? v.pop() : '';
+}
+
+async function submitProductEntryAjax() {
+  const form = document.getElementById('productForm');
+  if (!form) return console.warn('productForm tidak ditemukan');
+
+  const productId = String(document.getElementById('product_id').value || '').trim();
+  const formData = new FormData(form);
+
+  // basic validation
+  const nameVal = formData.get('name') || '';
+  const priceVal = formData.get('price') || '';
+  const descVal = formData.get('description') || '';
+  if (!nameVal.trim() || !descVal.trim() || priceVal === '') {
+    showToast?.('Nama, harga, dan deskripsi wajib diisi.', 'error');
+    return;
+  }
+
+  try {
+    if (productId) {
+      // UPDATE
+      const url = buildUrlFromTemplate(UPDATE_PRODUCT_AJAX_TEMPLATE, productId);
+      console.log('Updating product ->', url);
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        body: formData,
+        credentials: 'same-origin'
+      });
+      if (resp.ok) {
+        showToast?.('Product updated successfully!', 'success');
+        hideModal();
+        document.dispatchEvent(new CustomEvent('productUpdated'));
+      } else {
+        let data = null; try { data = await resp.json(); } catch(e) {}
+        showToast?.('Update failed: ' + (data?.detail || resp.status), 'error');
+      }
+    } else {
+      // CREATE
+      const url = ADD_PRODUCT_AJAX_URL;
+      console.log('Creating product ->', url);
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        body: formData,
+        credentials: 'same-origin'
+      });
+      if (resp.ok || resp.status === 201) {
+        showToast?.('Product created successfully!', 'success');
+        hideModal();
+        document.dispatchEvent(new CustomEvent('productAdded'));
+      } else {
+        let data = null; try { data = await resp.json(); } catch(e) {}
+        showToast?.('Create failed: ' + (data?.detail || resp.status), 'error');
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    showToast?.('Gagal terhubung ke server.', 'error');
+  }
+}
+
+// load product data into modal form and show it (for edit)
+async function openEditModal(productId) {
+  if (!productId) return;
+  const urlTemplate = `{% url 'main:show_json_by_id' '00000000-0000-0000-0000-000000000000' %}`;
+  const url = urlTemplate.replace('00000000-0000-0000-0000-000000000000', productId);
+  try {
+    const resp = await fetch(url, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+    if (!resp.ok) {
+      showToast?.('Failed to load product for edit', 'error');
+      return;
+    }
+    const data = await resp.json();
+    document.getElementById('product_id').value = data.id || productId;
+    document.getElementById('title').value = data.name || '';
+    document.getElementById('price').value = data.price || '';
+    document.getElementById('content').value = data.description || '';
+    document.getElementById('category').value = data.category || '';
+    document.getElementById('thumbnail').value = data.thumbnail || '';
+    document.getElementById('is_featured').checked = !!data.is_featured;
+    showModal('edit');
+  } catch (e) {
+    console.error(e);
+    showToast?.('Error loading product', 'error');
+  }
+}
+
+// hook: modal form submit
+document.addEventListener('DOMContentLoaded', function () {
+  const modalForm = document.getElementById('productForm');
+  if (modalForm) {
+    modalForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      submitProductEntryAjax();
+    });
+  }
+
+  // If the server-rendered page form is used (direct page POST), keep current behaviour.
+  // But also, to avoid duplication, intercept the page form submit to call AJAX instead (optional).
+  const pageForm = document.getElementById('createProductPageForm');
+  if (pageForm) {
+    pageForm.addEventListener('submit', function (e) {
+      // Prevent full page POST and use AJAX+modal behavior:
+      e.preventDefault();
+      // Copy fields from server-rendered page form into modal form and submit via AJAX
+      const pageFD = new FormData(pageForm);
+      // populate modal fields
+      try {
+        document.getElementById('title').value = pageFD.get('name') || pageFD.get('title') || '';
+        document.getElementById('price').value = pageFD.get('price') || '';
+        document.getElementById('content').value = pageFD.get('description') || '';
+        document.getElementById('category').value = pageFD.get('category') || '';
+        document.getElementById('thumbnail').value = pageFD.get('thumbnail') || '';
+        document.getElementById('is_featured').checked = pageFD.get('is_featured') !== null;
+      } catch (e) {
+        /* ignore */
+      }
+      // show modal and trigger submit (so create flow is consistent)
+      showModal('create');
+      // allow slight delay for UI to update then submit
+      setTimeout(() => submitProductEntryAjax(), 80);
+    });
+  }
+});
+</script>
 {% endblock %}

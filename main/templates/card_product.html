@@ -30,57 +30,56 @@
     </div>
   </div>
 
-  <!-- Content -->
-  <div class="p-5">
-    <div class="flex items-center text-sm text-gray-100 mb-3">
-      <time datetime="{{ product.date_added|date:'c' }}">
-        {{ product.date_added|date:"M j, Y" }}
-      </time>
-      <span class="mx-2">•</span>
-      <span>{{ product.price }} price</span>
-    </div>
+  <!-- Content: fleksibel -->
+  <div class="p-4 flex-1 flex flex-col justify-between">
+    <div>
 
-    <h3 class="text-lg font-semibold text-gray-100 mb-3 line-clamp-2 leading-tight">
-      <a href="{% url 'main:show_product' product.id %}" class="hover:text-blue-600 transition-colors">
-        {{ product.name }}
-      </a>
-    </h3>
-
-    <p class="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-4">
-      {{ product.content|truncatewords:20 }}
-    </p>
-
-    <!-- Action Buttons -->
-    {% if user.is_authenticated and product.user == user %}
-      <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-        <a href="{% url 'main:show_product' product.id %}" class="text-yellow-100 hover:text-blue-600 font-medium text-sm transition-colors">
-          Details
-        </a>
-
-        <div class="flex items-center space-x-2">
-          <!-- Edit as button-like link -->
-          <a href="{% url 'main:edit_product' product.id %}"
-             class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors shadow-sm">
-            Edit
-          </a>
-
-          <!-- Delete as POST form with CSRF and JS confirm -->
-          <form action="{% url 'main:delete_product' product.id %}" method="post" onsubmit="return confirm('Yakin ingin menghapus produk ini?');">
-            {% csrf_token %}
-            <button type="submit"
-                    class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-red-600 hover:bg-red-700 text-white transition-colors shadow-sm"
-                    aria-label="Delete product {{ product.name }}">
-              Delete
-            </button>
-          </form>
+      <!-- Price -->
+      <div class="mb-2">
+        <div class="text-2xl font-extrabold text-[#111827]">
+          Rp {{ product.price }}
         </div>
       </div>
-    {% else %}
-      <div class="pt-4 border-t border-gray-100">
-        <a href="{% url 'main:show_product' product.id %}" class="text-yellow-100 hover:text-blue-600 font-medium text-sm transition-colors">
-          Details
-        </a>
-      </div>
-    {% endif %}
+
+    <!-- Title with category + name inline -->
+    <h2 class="text-sm text-[#111827] font-medium mb-3 line-clamp-2">
+      <a href="{% url 'main:show_product' product.id %}" class="hover:text-[#0F6FB8] transition-colors">
+        <span class="text-[#2F80E4] font-semibold">[{{ product.category }}]</span>
+        {{ product.name }}
+      </a>
+    </h2>
+
+      <!-- short description -->
+      <p class="text-sm text-gray-600 leading-relaxed line-clamp-3 mb-4">
+        ⤷"{{ product.description|truncatewords:18 }}ˎ"˗
+      </p>
+    </div>
+
+    <!-- Footer actions -->
+    <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+      <a href="{% url 'main:show_product' product.id %}" class="text-[#0F6FB8] hover:text-[#395886] font-medium text-sm hover:text[#395886] transition-colors">
+        Details
+      </a>
+
+      {% if user.is_authenticated and product.user == user %}
+  <div class="flex items-center space-x-3">
+    <!-- Edit sebagai tombol -->
+    <a href="{% url 'main:edit_product' product.id %}"
+       role="button"
+       class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+      Edit
+    </a>
+
+    <!-- Delete sebagai form POST dengan CSRF dan konfirmasi -->
+    <form action="{% url 'main:delete_product' product.id %}" method="post" onsubmit="return confirm('Yakin ingin menghapus produk ini?');">
+      {% csrf_token %}
+      <button type="submit"
+              class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition">
+        Delete
+      </button>
+    </form>
+  </div>
+{% endif %}
+    </div>
   </div>
 </article>

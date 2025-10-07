@@ -1,16 +1,20 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block meta %}
 <title>Login - KickEleven</title>
 {% endblock meta %}
 
 {% block content %}
-<div class="bg-[#f5f5f5] w-full min-h-screen flex items-center justify-center p-8">
+<div 
+  class="w-full min-h-screen flex items-center justify-center p-8 bg-cover bg-center"
+  style="background-image: url('{% static "image/newlogin.png" %}');"
+>
   <div class="max-w-md w-full">
-    <div class="bg-[#2A4B7C] rounded-lg border border-yellow-200 p-6 sm:p-8 form-style">
+    <div class="bg-blue-50/90 rounded-lg border border-white-200 p-6 sm:p-8 form-style">
       <div class="text-center mb-8">
-        <h1 class="text-2xl font-bold text-[#D5EFFF] mb-2">Sign In</h1>
-        <p class="text-[#FFFCEF]">Welcome back to KickEleven!</p>
+        <h1 class="text-2xl font-bold text-[#163599] mb-2">Sign In</h1>
+        <p class="text-[#163599]">Welcome back to KickEleven!</p>
       </div>
 
       <!-- Form Errors Display -->
@@ -42,30 +46,30 @@
         {% csrf_token %}
         
         <div>
-          <label for="username" class="block text-sm font-medium text-[#FFFCEF] mb-2">Username</label>
+          <label for="username" class="block text-sm font-medium text-[#163599] mb-2">Username</label>
           <input 
             id="username" 
             name="username" 
             type="text" 
-            requiblue 
-            class="w-full px-4 py-3 border !border-yellow-300 rounded-md focus:!outline-none focus:!border-green-100 transition-colors" 
+            required
+            class="w-full px-4 py-3 border !border-blue-800 rounded-md focus:!outline-none focus:!border-gray-100 transition-colors" 
             placeholder="Enter your username">
         </div>
 
         <div>
-          <label for="password" class="block text-sm font-medium text-[#FFFCEF] mb-2">Password</label>
+          <label for="password" class="block text-sm font-medium text-[#163599] mb-2">Password</label>
           <input 
             id="password" 
             name="password" 
             type="password" 
-            requiblue 
-            class="w-full px-4 py-3 border !border-yellow-300 rounded-md focus:outline-none focus:!border-green-100 transition-colors" 
+            required
+            class="w-full px-4 py-3 border !border-blue-800 rounded-md focus:outline-none focus:!border-green-100 transition-colors" 
             placeholder="Enter your password">
         </div>
 
         <button 
           type="submit" 
-          class="w-full bg-[#D5EFFF] text-[#2A4B7C] font-medium py-3 px-4 rounded-md hover:bg-[#ABDFFF] transition-colors">
+          class="w-full bg-[#163599] text-[#EFEFEF] font-medium py-3 px-4 rounded-md hover:bg-[#ABDFFF] transition-colors">
           Sign In
         </button>
       </form>
@@ -78,11 +82,11 @@
               class="
                 px-4 py-3 rounded-md text-sm border
                 {% if message.tags == 'success' %}
-                  bg-blue-50 border-blue-200 text-blue-700
+                  bg-[#F0F3FA] border-[#F0F3FA] text-[#628ECB]
                 {% elif message.tags == 'error' %}
-                  bg-blue-50 border-blue-200 text-blue-700
+                  bg-red-50 border-red-200 text-red-700
                 {% else %}
-                  bg-yellow-50 border-yellow-200 text-yellow-700
+                  bg-gray-50 border-gray-200 text-gray-700
                 {% endif %}
               ">
               {{ message }}
@@ -91,10 +95,10 @@
         </div>
       {% endif %}
 
-      <div class="mt-6 text-center pt-6 border-t border-yellow-200">
-        <p class="text-[#FFFCEF] text-sm">
+      <div class="mt-6 text-center pt-6 border-t border-gray-200">
+        <p class="text-[#2C395E] text-sm">
           Don't have an account? 
-          <a href="{% url 'main:register' %}" class="text-[#FFE600] hover:text-[#EF9101] font-medium">
+          <a href="{% url 'main:register' %}" class="text-[#163599] hover:text-blue-300 font-medium">
             Register Now
           </a>
         </p>
@@ -103,3 +107,127 @@
   </div>
 </div>
 {% endblock content %}
+
+<script>
+(function () {
+  // Helper aman untuk munculkan toast 
+  function showToastSafe(message, type = 'normal') {
+    if (typeof showToast === 'function') {
+      showToast(message, type);
+    } else {
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    }
+  }
+
+  function getCookie(name) {
+    const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return v ? v.pop() : '';
+  }
+
+  // Cari form login
+  let form = document.getElementById('loginForm');
+  if (!form) {
+    for (let f of document.getElementsByTagName('form')) {
+      if (f.querySelector('input[name="username"]')) {
+        form = f;
+        break;
+      }
+    }
+  }
+  if (!form) {
+    console.warn('form login tidak ditemukan');
+    return;
+  }
+
+  // Buat elemen error text 
+  let errorEl = document.getElementById('loginError');
+  if (!errorEl) {
+    errorEl = document.createElement('div');
+    errorEl.id = 'loginError';
+    errorEl.className = 'hidden text-sm text-red-600 whitespace-pre-line mt-3';
+    form.parentNode.insertBefore(errorEl, form.nextSibling);
+  }
+
+  const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    errorEl.classList.add('hidden');
+    errorEl.textContent = '';
+
+    // Disable tombol saat loading
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+    }
+
+    const fdOrig = new FormData(form);
+    const fd = new FormData();
+    if (fdOrig.has('username')) fd.append('username', fdOrig.get('username'));
+    if (fdOrig.has('password')) fd.append('password', fdOrig.get('password'));
+
+    const url = "{% url 'main:login_ajax' %}";
+
+    try {
+      const resp = await fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        body: fd
+      });
+
+      if (resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        showToastSafe('Login berhasil!', 'success');
+
+        // Tandai agar muncul toast hijau sekali di halaman berikut
+        sessionStorage.setItem('toastFlag', 'login');
+
+        if (data && data.redirect) {
+          window.location.href = data.redirect;
+        } else {
+          window.location.reload();
+        }
+      } else {
+        const data = await resp.json().catch(() => null);
+        let message = 'Login gagal.';
+        if (data) {
+          if (data.errors) {
+            message = Object.values(data.errors).join('\n');
+          } else if (data.detail) {
+            if (data.detail === 'INVALID_CREDENTIALS') message = 'Username atau password salah.';
+            else if (data.detail === 'MISSING_FIELDS') message = 'Username dan password wajib diisi.';
+            else message = data.detail;
+          } else if (data.error) {
+            message = data.error;
+          }
+        } else {
+          message = 'Login gagal (server ' + resp.status + ')';
+        }
+
+        errorEl.textContent = message;
+        errorEl.classList.remove('hidden');
+        showToastSafe(message, 'error');
+      }
+    } catch (err) {
+      console.error('Login error', err);
+      const msg = 'Gagal terhubung ke server. Coba lagi.';
+      errorEl.textContent = msg;
+      errorEl.classList.remove('hidden');
+      showToastSafe(msg, 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+      }
+    }
+  });
+
+  // Fokus otomatis ke username
+  try {
+    const uname = form.querySelector('input[name="username"]');
+    if (uname) uname.focus();
+  } catch (e) {}
+})();
+
+</script>

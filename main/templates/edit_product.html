@@ -23,35 +23,127 @@
         <p class="text-gray-100">Update your ElevenKick product and stories</p>
       </div>
       
-      <form method="POST" class="space-y-6">
+        <!-- Server-rendered fallback form (users can still edit directly on page) -->
+      <form method="POST" id="editProductPageForm">
         {% csrf_token %}
         {% for field in form %}
-          <div>
-            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-100 mb-2">
-              {{ field.label }}
-            </label>
-            <div class="w-full">
-              {{ field }}
-            </div>
-            {% if field.help_text %}
-              <p class="mt-1 text-sm text-gray-500">{{ field.help_text }}</p>
-            {% endif %}
-            {% for error in field.errors %}
-              <p class="mt-1 text-sm text-red-600">{{ error }}</p>
-            {% endfor %}
+          <div class="mb-4">
+            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-[#395886] mb-2">{{ field.label }}</label>
+            <div class="w-full">{{ field }}</div>
+            {% if field.help_text %}<p class="mt-1 text-sm text-gray-500">{{ field.help_text }}</p>{% endif %}
+            {% for error in field.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
           </div>
         {% endfor %}
-        
+
         <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
-          <a href="{% url 'main:show_main' %}" class="order-2 sm:order-1 px-6 py-3 border border-gray-300 text-gray-100 rounded-md font-medium hover:bg-blue-600 transition-colors text-center">
+          <a href="{% url 'main:show_main' %}" class="order-2 sm:order-1 bg-white px-6 py-3 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-[#B1C9EF] transition-colors text-center">
             Cancel
           </a>
-          <button type="submit" class="order-1 sm:order-2 flex-1 bg-blue-100 text-blue-900 px-6 py-3 rounded-md font-medium hover:bg-blue-300 transition-colors">
-            Update Product
+          <button type="submit" id="publishEditPageBtn" class="order-1 sm:order-2 flex-1 bg-[#2F80E4] text-white px-6 py-3 rounded-md font-medium hover:bg-[#395886] transition-colors">
+            Update Product⌯⌲
           </button>
         </div>
       </form>
     </div>
+
   </div>
 </div>
+
+
+{% block extra_scripts %}
+<script>
+function getCookie(name) {
+  const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+  return v ? v.pop() : '';
+}
+
+async function openEditModal(productId) {
+  if (!productId) return console.warn('openEditModal called without id');
+  const urlTemplate = "{% url 'main:show_json_by_id' '00000000-0000-0000-0000-000000000000' %}";
+  const url = urlTemplate.replace('00000000-0000-0000-0000-000000000000', productId);
+  try {
+    const resp = await fetch(url, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+    if (!resp.ok) {
+      if (typeof showToast === 'function') showToast('Failed to load product for edit', 'error');
+      return;
+    }
+    const data = await resp.json();
+    // populate modal fields (modal.html contains elements with these IDs)
+    document.getElementById('product_id').value = data.id || productId;
+    document.getElementById('title').value = data.name || '';
+    document.getElementById('price').value = data.price || '';
+    document.getElementById('content').value = data.description || '';
+    document.getElementById('category').value = data.category || '';
+    document.getElementById('thumbnail').value = data.thumbnail || '';
+    document.getElementById('is_featured').checked = !!data.is_featured;
+    showModal('edit');
+  } catch (e) {
+    console.error(e);
+    if (typeof showToast === 'function') showToast('Error loading product', 'error');
+  }
+}
+
+// submit handler for modal form
+document.addEventListener('DOMContentLoaded', function () {
+  const modalForm = document.getElementById('productForm');
+  if (modalForm) {
+    modalForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const productId = document.getElementById('product_id').value;
+      const formData = new FormData(modalForm);
+
+      // basic validation
+      if (!formData.get('name') || !formData.get('description') || formData.get('price') === null) {
+        showToast?.('Nama, harga, dan deskripsi wajib diisi.', 'error');
+        return;
+      }
+
+      try {
+        const urlTemplate = "{% url 'main:update_product_ajax' '00000000-0000-0000-0000-000000000000' %}";
+        const url = urlTemplate.replace('00000000-0000-0000-0000-000000000000', productId);
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'X-CSRFToken': getCookie('csrftoken') },
+          body: formData,
+          credentials: 'same-origin'
+        });
+
+        if (resp.ok) {
+          showToast?.('Product updated successfully!', 'success');
+          hideModal();
+          document.dispatchEvent(new CustomEvent('productUpdated'));
+        } else {
+          let data = null;
+          try { data = await resp.json(); } catch (e){}
+          showToast?.('Update failed: ' + (data?.detail || resp.status), 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast?.('Gagal terhubung ke server.', 'error');
+      }
+    });
+  }
+
+  // If the page-level edit form is submitted (fallback), intercept and forward to modal+ajax:
+  const pageForm = document.getElementById('editProductPageForm');
+  if (pageForm) {
+    pageForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      // copy values into modal and submit via AJAX
+      const pageFD = new FormData(pageForm);
+      try {
+        document.getElementById('title').value = pageFD.get('name') || pageFD.get('title') || '';
+        document.getElementById('price').value = pageFD.get('price') || '';
+        document.getElementById('content').value = pageFD.get('description') || '';
+        document.getElementById('category').value = pageFD.get('category') || '';
+        document.getElementById('thumbnail').value = pageFD.get('thumbnail') || '';
+        document.getElementById('is_featured').checked = pageFD.get('is_featured') !== null;
+      } catch (e) { /* ignore */ }
+
+      showModal('edit');
+      setTimeout(() => { document.getElementById('productForm').dispatchEvent(new Event('submit', {cancelable:true})); }, 60);
+    });
+  }
+});
+</script>
 {% endblock %}

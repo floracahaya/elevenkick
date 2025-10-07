@@ -16,73 +16,264 @@
             </a>
         </div>
         
-        <!-- Article -->
-        <article class="bg-blue-900 rounded-lg border border-gray-600 overflow-hidden">
+         <!-- Loading State -->
+        <div id="loading-state" class="bg-white rounded-lg border border-gray-200 p-12 text-center">
+            <svg class="animate-spin h-8 w-8 text-[#628ECB] inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+            <p class="text-gray-600 mt-3">Loading product detail...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-state" class="bg-white rounded-lg border border-gray-200 p-12 text-center hidden">
+            <div class="w-16 h-16 mx-auto mb-4">
+                <div class="text-red-500 text-5xl">⚠️</div>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Failed to load product</h3>
+            <p class="text-gray-500">Please try again later.</p>
+        </div>
+        
+        <!-- Product Content -->
+        <article id="product-article" class="bg-white rounded-lg border border-gray-200 overflow-hidden hidden">
             
             <!-- Header -->
             <div class="p-6 sm:p-8">
-                <div class="flex flex-wrap items-center gap-2 mb-4">
-                    <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-blue-600 text-white">
+                <!-- badges container (category etc.) -->
+                <div id="badges-container" class="flex flex-wrap items-center gap-2 mb-4">
+                    {% if product.get_category_display %}
+                      <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-[#0F6FB8] text-white">
                         {{ product.get_category_display }}
-                    </span>
-                    {% if product.is_featured %}
-                        <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-yellow-100 text-blue-600">
-                            Featured
-                        </span>
-                    {% endif %}
-                    {% if product.is_product_hot %}
-                        <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-red-100 text-red-800">
-                            Hot
-                        </span>
+                      </span>
                     {% endif %}
                 </div>
                 
-                <h1 class="text-3xl sm:text-4xl font-bold text-white leading-tight mb-4">
+                <h1 id="product-name" class="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight mb-4">
                     {{ product.name }}
                 </h1>
                 
-                <div class="flex flex-wrap items-center text-sm text-gray-200 gap-4">
-                    <time datetime="{{ product.date_added|date:'c' }}">
-                        {{ product.date_added|date:"M j, Y" }}
+                <div class="flex flex-wrap items-center text-sm text-gray-500 gap-4">
+                    <time id="product-date" datetime="{% if product.date_added %}{{ product.date_added|date:'c' }}{% endif %}">
+                        {% if product.date_added %}{{ product.date_added|date:"d M Y" }}{% endif %}
                     </time>
-                    <span>{{ product.price }} price</span>
+                    <span id="product-views">
+                        <!-- optional: views (server may not set this) -->
+                    </span>
                 </div>
             </div>
 
-            <!-- Featured Image -->
-            {% if product.thumbnail %}
-                <div class="px-6 sm:px-8">
-                    <img src="{{ product.thumbnail }}" 
-                         alt="{{ product.name }}" 
-                         class="w-full h-64 sm:h-80 lg:h-96 object-cover rounded-lg">
+            <!-- Featured/Image + Right column -->
+            <div class="px-6 sm:px-8">
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <!-- Left: image area (maps to your previous lg:col-span-7) -->
+                <div class="lg:col-span-7">
+                  <div id="featured-image-container" class="rounded-lg overflow-hidden border border-gray-100 bg-white flex items-center justify-center p-4 min-h-[420px] md:min-h-[520px] lg:min-h-[640px]">
+                    {% if product.thumbnail %}
+                      <img id="featured-image" src="{{ product.thumbnail }}" alt="{{ product.name }}" class="w-auto max-w-full max-h-[640px] object-contain">
+                    {% else %}
+                      <img id="featured-image" src="" alt="{{ product.name }}" class="w-auto max-w-full max-h-[640px] object-contain">
+                    {% endif %}
+                  </div>
                 </div>
-            {% endif %}
 
-            <!-- Content -->
-            <div class="p-6 sm:p-8">
-                <div class="prose prose-lg max-w-none">
-                    <div class="text-gray-200 leading-relaxed whitespace-pre-line text-base sm:text-lg">
-                        {{ product.description }}
+                <!-- Right: meta/info (maps to your previous lg:col-span-5) -->
+                <div class="lg:col-span-5 flex flex-col justify-start">
+                  <!-- Category + Date small -->
+                  <div class="mt-3 flex items-center gap-4 text-sm">
+                    {% if product.category %}
+                      <span class="inline-block px-2 py-1 rounded text-sm font-medium text-white bg-red-600">
+                        {{ product.category }}
+                      </span>
+                    {% endif %}
+                    <time id="product-date-duplicate" datetime="{% if product.date_added %}{{ product.date_added|date:'c' }}{% endif %}" class="text-gray-500 hidden">
+                      {% if product.date_added %}{{ product.date_added|date:"d M Y" }}{% endif %}
+                    </time>
+                  </div>
+
+                  <!-- Price -->
+                  <div class="mt-6">
+                    <div class="text-lg text-gray-600">The Price:</div>
+                    <div id="product-price" class="text-3xl font-extrabold text-[#111827]">
+                      Rp {% if product.price %}{{ product.price }}{% endif %}
                     </div>
+                  </div>
+
+                  <!-- Seller -->
+                  <div class="mt-6">
+                    <h3 class="text-sm font-semibold text-gray-900">Seller</h3>
+                    <ul class="list-disc list-inside mt-2 text-sm text-gray-700">
+                      <li id="product-seller">{% if product.user %}{{ product.user.username }}{% endif %}</li>
+                    </ul>
+                  </div>
+
+                  <!-- Details -->
+                  <div class="mt-6 border-t border-gray-100 pt-4">
+                    <div class="flex items-center justify-between">
+                      <div class="text-sm font-medium text-gray-900">Details</div>
+                      <div class="text-sm text-gray-400">+</div>
+                    </div>
+                  </div>
+
+                  <!-- Description -->
+                  <div class="mt-4">
+                    <h3 class="text-sm font-semibold text-gray-900">Description:</h3>
+                    <div id="product-description" class="mt-3 prose prose-sm max-w-none text-gray-700">
+                      {% if product.description %}{{ product.description }}{% endif %}ˎˊ˗
+                    </div>
+                  </div>
+
+                  <!-- Footer CTA (kept here to preserve layout) -->
+                  <div class="mt-8 bg-[#395886] rounded-b-2xl">
+                    <div class="text-center text-m font-bold text-white py-4">
+                      Football Product
+                    </div>
+                  </div>
                 </div>
+              </div>
             </div>
 
-            <!-- Author Info -->
-            <div class="border-t border-gray-200 p-6 sm:p-8 bg-gray-50">
+            <!-- Author / meta footer -->
+            <div class="border-t border-gray-200 p-6 sm:p-8 bg-gray-50 hidden">
                 <div class="flex items-center justify-between">
                     <div>
-                        <div class="font-medium text-blue-600">
-                            {% if product.user %}
-                                <p>Seller: {{ product.user.username }}</p>
-                            {% else %}
-                                <p>Seller: Anonymous</p>
-                            {% endif %}
+                        <div class="font-medium text-gray-900">
+                            <p id="product-author">Seller: {% if product.user %}{{ product.user.username }}{% else %}Loading...{% endif %}</p>
                         </div>
-                        <p class="text-sm text-gray-500">Author</p>
+                        <p class="text-sm text-gray-500">Seller</p>
                     </div>
                 </div>
             </div>
         </article>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // ---------- CONFIG ----------
+  const PRODUCT_ID = "{{ product.id|default_if_none:product.pk|default_if_none:'' }}";
+  const PRODUCT_DETAIL_ENDPOINT = PRODUCT_ID
+    ? `{% url 'main:show_json_by_id' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', PRODUCT_ID)
+    : null;
+
+  // ---------- ELEMENTS ----------
+  const q = (s) => document.querySelector(s);
+  const loadingState = q('#loading-state');
+  const errorState = q('#error-state');
+  const articleContent = q('#product-article') || q('article.bg-white.rounded-lg, article.bg-white.rounded-2xl, article');
+  const productName = q('#product-name') || (articleContent && articleContent.querySelector('h1'));
+  const productPrice = q('#product-price') || (articleContent && articleContent.querySelector('.text-3xl.font-extrabold, .text-3xl'));
+  const featuredImage = q('#featured-image') || (articleContent && articleContent.querySelector('img'));
+  const productDate = q('#product-date') || (articleContent && articleContent.querySelector('time'));
+  const productSeller = q('#product-seller') || (articleContent && articleContent.querySelector('.list-disc li'));
+  const productDescription = q('#product-description') || (articleContent && articleContent.querySelector('.mt-4 .prose, .prose'));
+
+  function showState(state) {
+    if (loadingState) loadingState.classList.toggle('hidden', state !== 'loading');
+    if (errorState) errorState.classList.toggle('hidden', state !== 'error');
+    if (articleContent) articleContent.classList.toggle('hidden', state !== 'ready');
+  }
+
+  function bailToReady(reason) {
+    console.warn('[product-patcher] bailToReady:', reason);
+    try { showState('ready'); } catch (e) { /* ignore */ }
+  }
+
+  function looksServerRendered() {
+    try {
+      if (productName?.textContent?.trim()) return true;
+      if (productPrice?.textContent && /\d/.test(productPrice.textContent)) return true;
+    } catch (e) {}
+    return false;
+  }
+
+  // helpers
+  const escapeHtml = (s = '') =>
+    String(s).replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+  const setIfEmpty = (el, value) => {
+    if (!el) return;
+    const cur = el.textContent ?? '';
+    if (!cur.trim() || cur.includes('{{')) el.textContent = value == null ? '' : String(value);
+  };
+
+  const setImageIfEmpty = (imgEl, src, alt) => {
+    if (!imgEl) return;
+    const existing = imgEl.getAttribute('src') || '';
+    const emptyAttr = !existing.trim() || existing.includes('{{');
+    if (src && emptyAttr) {
+      imgEl.src = src;
+      if (alt) imgEl.alt = alt;
+    }
+  };
+
+  const formatPrice = (v) => {
+    if (v == null || v === '') return '';
+    const n = Number(v);
+    if (!Number.isNaN(n)) return new Intl.NumberFormat('id-ID', { style:'currency', currency:'IDR', maximumFractionDigits:0 }).format(n);
+    return String(v);
+  };
+
+  async function fetchJson(url, timeout = 7000) {
+    const ac = new AbortController();
+    const id = setTimeout(() => ac.abort(), timeout);
+    try {
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin', signal: ac.signal });
+      if (!res.ok) throw new Error('status ' + res.status);
+      return await res.json();
+    } finally {
+      clearTimeout(id);
+    }
+  }
+
+  // early exits
+  if (looksServerRendered()) {
+    showState('ready');
+    return;
+  }
+  if (!PRODUCT_DETAIL_ENDPOINT) {
+    bailToReady('no PRODUCT_DETAIL_ENDPOINT configured or product id missing');
+    return;
+  }
+
+  const safetyTimeout = setTimeout(() => bailToReady('safety timeout triggered'), 7500);
+
+  (async () => {
+    try {
+      showState('loading');
+      const data = await fetchJson(PRODUCT_DETAIL_ENDPOINT, 7000);
+      if (!data) { bailToReady('empty json payload'); return; }
+
+      setIfEmpty(productName, data.name || '');
+      if (productPrice) {
+        const cur = productPrice.textContent || '';
+        if (!cur.trim() || cur.includes('{{')) productPrice.textContent = formatPrice(data.price) || (data.price != null ? String(data.price) : '');
+      }
+      setImageIfEmpty(featuredImage, data.thumbnail || data.image || '', data.name || '');
+      if (productDate && (!productDate.textContent || productDate.textContent.trim() === '')) {
+        if (data.date_added) {
+          const d = new Date(data.date_added);
+          productDate.textContent = isNaN(d) ? String(data.date_added) : d.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+          productDate.setAttribute('datetime', data.date_added);
+        }
+      }
+      if (productSeller) {
+        const sellerName = (data.user && data.user.username) || data.seller || '';
+        setIfEmpty(productSeller, sellerName);
+      }
+      if (productDescription && (!productDescription.textContent || productDescription.textContent.trim() === '')) {
+        const raw = data.description || '';
+        productDescription.innerHTML = `<p>${escapeHtml(raw)}</p>`;
+      }
+
+      showState('ready');
+      console.debug('[product-patcher] success - article shown');
+    } catch (err) {
+      bailToReady('fetch error: ' + (err && err.message));
+    } finally {
+      clearTimeout(safetyTimeout);
+    }
+  })();
+});
+</script>
+
 {% endblock content %}
