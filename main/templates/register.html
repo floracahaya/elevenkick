@@ -217,11 +217,9 @@
 
       if (resp.ok) {
         const data = await resp.json().catch(() => ({}));
-        // show toast sebelum redirect supaya user lihat notifikasi
-        showToastSafe('Your account has been successfully created ദ്ദി(ᵔᗜᵔ)!', 'success');
+        showToastSafe('Your account has been successfully created!', 'success');
         sessionStorage.setItem('toastFlag', 'register');
-
-        // beri sedikit jeda agar toast sempat muncul
+        
         setTimeout(() => {
           window.location.href = "{% url 'main:login' %}";
         }, 800);

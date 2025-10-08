@@ -230,7 +230,7 @@ async function fetchProductFromServer(){
     const data = await res.json();
     allProductData = data || [];
     filterAndDisplayProduct();
-    if (typeof showToast === 'function') showToast('Daftar produk berhasil diperbarui', 'success');
+    if (typeof showToast === 'function') showToast('Signed in successfully.', 'success');
   } catch (err) {
     console.error('Error loading product:', err);
     displayPageSection({ showLoading: false });

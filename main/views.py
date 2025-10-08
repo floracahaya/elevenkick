@@ -202,7 +202,6 @@ def register(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             form.save()
-            # messages.success(request, 'Your account has been successfully created ദ്ദി(ᵔᗜᵔ)!')
             return redirect('main:login')
     context = {'form':form}
     return render(request, 'register.html', context)
@@ -275,7 +274,21 @@ def login_ajax(request):
 
 def logout_user(request):
     logout(request)
+    messages.success(request, "You have been logged out successfully.")
     response = HttpResponseRedirect(reverse('main:login'))
     response.delete_cookie('last_login')
     response.delete_cookie('username')
     return response 
+
+
+@require_POST
+@csrf_protect
+def logout_ajax(request):
+    logout(request)
+    response = JsonResponse({
+        'status': 'success',
+        'message': 'You have been logged out successfully.'
+    })
+    response.delete_cookie('last_login')
+    response.delete_cookie('username')
+    return response
