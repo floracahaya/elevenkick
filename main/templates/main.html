@@ -90,7 +90,7 @@
       </div>
       <h3 class="text-lg font-medium text-gray-900 mb-2">No product at the moment...</h3>
       <p class="text-gray-500 mb-6">Be the first to share KickEleven product with the community.</p>
-      <a href="javascript:void(0)" onclick="showModal('create')" class="inline-flex items-center px-4 py-2 bg-[#2F80E4] text-white rounded-md hover:bg-[#395886] transition"> ⤷"Create Product ˎˊ˗ </a>
+      <a href="javascript:void(0)" onclick="showModal('create')" class="inline-flex items-center px-4 py-2 bg-[#2F80E4] text-white rounded-md hover:bg-[#395886] transition">Create Product</a>
     </div>
 
 
@@ -377,6 +377,8 @@ document.addEventListener('click', (e) => {
 /* ---------- re-fetch on product events (unchanged) ---------- */
 document.addEventListener('productAdded', () => fetchProductFromServer());
 document.addEventListener('productUpdated', () => fetchProductFromServer());
+
 </script>
+
 
 {% endblock content %}

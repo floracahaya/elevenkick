@@ -42,7 +42,21 @@
         </div>
       {% endif %}
 
-      <form method="POST" action="" class="space-y-5">
+      <!-- Error Message -->
+      <div id="errorMessage" class="hidden mb-4 rounded-lg bg-red-50 p-4 border border-red-200">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <div class="ml-3">
+            <ul id="errorList" class="text-sm text-red-800 list-disc list-inside space-y-1"></ul>
+          </div>
+        </div>
+      </div>
+
+      <form id="registerForm" method="POST" action="" class="space-y-5">
         {% csrf_token %}
         
         <div>
@@ -54,6 +68,7 @@
             required 
             class="w-full px-4 py-3 border !border-blue-800 rounded focus:outline-none focus:!border-green-500 transition duration-200" 
             placeholder="Choose a username">
+          <p class="mt-1 text-xs text-gray-500">150 characters or fewer. Letters, digits and @/./+/-/_ only.</p>
         </div>
 
         <div>
@@ -80,8 +95,15 @@
 
         <button 
           type="submit" 
-          class="w-full bg-[#163599] text-[#FFFFFF] font-medium py-3 px-4 rounded hover:bg-[#ABDFFF] focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-200">
-          Create Account
+          id="registerButton"
+          class="w-full bg-[#163599] text-[#FFFFFF] font-medium py-3 px-4 rounded hover:bg-[#ABDFFF] focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-200 flex items-center justify-center">
+          <span id="registerButtonText">Create Account</span>
+          <span id="registerSpinner" class="hidden ml-2">
+            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </span>
         </button>
       </form>
 
@@ -119,142 +141,87 @@
     </div>
   </div>
 
+<!-- Toast Component -->
+<div id="toast-component" class="fixed bottom-5 right-5 flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl transform translate-y-64 opacity-0 transition-all duration-500 ease-out z-50 border-l-4">
+  <span id="toast-icon" class="text-2xl"></span>
+  <p id="toast-title" class="font-semibold text-sm"></p>
+</div>
+
+<script src="{% static 'js/toast.js' %}"></script>
 <script>
-(function () {
-  // safe toast helper
-  function showToastSafe(message, type = 'normal') {
-    if (typeof showToast === 'function') {
-      showToast(message, type);
-    } else {
-      console.log(`[${type.toUpperCase()}] ${message}`);
-    }
-  }
-
-  function getCookie(name) {
-    const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-    return v ? v.pop() : '';
-  }
-
-  // cari form register
-  let form = document.getElementById('registerForm');
-  if (!form) {
-    const forms = document.getElementsByTagName('form');
-    for (let f of forms) {
-      if (f.querySelector('input[name="username"]')) {
-        form = f;
-        break;
-      }
-    }
-  }
-  if (!form) {
-    console.warn('register-ajax: form register tidak ditemukan');
-    return;
-  }
-
-  // elemen error minimal
-  let errorEl = document.getElementById('registerError');
-  if (!errorEl) {
-    errorEl = document.createElement('div');
-    errorEl.id = 'registerError';
-    errorEl.className = 'hidden text-sm text-red-600 whitespace-pre-line mt-3';
-    form.parentNode.insertBefore(errorEl, form.nextSibling);
-  }
-
-  const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
-
-  form.addEventListener('submit', async function (e) {
+document.getElementById('registerForm').addEventListener('submit', async function(e) {
     e.preventDefault();
-    errorEl.classList.add('hidden');
-    errorEl.textContent = '';
-
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
-    }
-
+    
+    const registerButton = document.getElementById('registerButton');
+    const registerButtonText = document.getElementById('registerButtonText');
+    const registerSpinner = document.getElementById('registerSpinner');
+    const errorMessage = document.getElementById('errorMessage');
+    const errorList = document.getElementById('errorList');
+    
+    // Disable button dan show spinner
+    registerButton.disabled = true;
+    registerButtonText.textContent = 'Creating account...';
+    registerSpinner.classList.remove('hidden');
+    errorMessage.classList.add('hidden');
+    errorList.innerHTML = '';
+    
+    const formData = new FormData(this);
+    
     try {
-      const fdOrig = new FormData(form);
-
-      // ambil nilai password dari berbagai kemungkinan nama input
-      const pw1 = (fdOrig.get('password1') ?? fdOrig.get('password') ?? fdOrig.get('password_1') ?? '').toString();
-      const pw2 = (fdOrig.get('password2') ?? fdOrig.get('password_confirm') ?? fdOrig.get('confirm_password') ?? fdOrig.get('password_2') ?? '').toString();
-
-      // client-side validation: wajib, dan harus sama
-      if (!pw1 || !pw2) {
-        const msg = 'Password dan konfirmasi password wajib diisi.';
-        errorEl.textContent = msg;
-        errorEl.classList.remove('hidden');
-        showToastSafe(msg, 'error');
-        return;
-      }
-
-      if (pw1 !== pw2) {
-        const msg = 'Password tidak sama. Mohon periksa kembali.';
-        errorEl.textContent = msg;
-        errorEl.classList.remove('hidden');
-        showToastSafe(msg, 'error');
-        return;
-      }
-
-      // Siapkan FormData yang dikirim ke server.
-      // Kirim username jika ada, dan kirim password1/password2 (standar Django) plus password sebagai fallback.
-      const fd = new FormData();
-      if (fdOrig.has('username')) fd.append('username', fdOrig.get('username'));
-      // gunakan nama-field yang umum dipakai server-side
-      fd.append('password1', pw1);
-      fd.append('password2', pw2);
-      // fallback: jika server mengharapkan 'password'
-      fd.append('password', pw1);
-
-      const url = "{% url 'main:register_ajax' %}";
-
-      const resp = await fetch(url, {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'X-CSRFToken': getCookie('csrftoken') },
-        body: fd
-      });
-
-      if (resp.ok) {
-        const data = await resp.json().catch(() => ({}));
-        showToastSafe('Your account has been successfully created!', 'success');
-        sessionStorage.setItem('toastFlag', 'register');
+        const response = await fetch("{% url 'main:register_ajax' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        });
         
-        setTimeout(() => {
-          window.location.href = "{% url 'main:login' %}";
-        }, 800);
-        return;
-      } else {
-        const data = await resp.json().catch(() => null);
-        let message = 'Registrasi gagal.';
-        if (data) {
-          if (data.errors) {
-            message = Object.values(data.errors).join('\n');
-          } else if (data.detail) {
-            message = data.detail;
-          } else if (data.error) {
-            message = data.error;
-          }
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            showToast('Account created successfully! 🎉', 'success', 2000);
+            
+            // Redirect ke login setelah 1.5 detik
+            setTimeout(() => {
+                window.location.href = "{% url 'main:login' %}";
+            }, 1500);
         } else {
-          message = 'Registrasi gagal (server error ' + resp.status + ')';
+            // Show error messages
+            if (data.errors) {
+                Object.values(data.errors).forEach(errorArray => {
+                    errorArray.forEach(error => {
+                        const li = document.createElement('li');
+                        li.textContent = error;
+                        errorList.appendChild(li);
+                    });
+                });
+            } else if (data.message) {
+                const li = document.createElement('li');
+                li.textContent = data.message;
+                errorList.appendChild(li);
+            }
+            
+            errorMessage.classList.remove('hidden');
+            showToast('Registration failed. Please check the form.', 'error');
+            
+            // Reset button
+            registerButton.disabled = false;
+            registerButtonText.textContent = 'Create Account';
+            registerSpinner.classList.add('hidden');
         }
-        errorEl.textContent = message;
-        errorEl.classList.remove('hidden');
-        showToastSafe(message, 'error');
-      }
-    } catch (err) {
-      console.error('Register error', err);
-      const msg = 'Gagal terhubung ke server. Coba lagi.';
-      errorEl.textContent = msg;
-      errorEl.classList.remove('hidden');
-      showToastSafe(msg, 'error');
-    } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
-      }
+    } catch (error) {
+        console.error('Error:', error);
+        const li = document.createElement('li');
+        li.textContent = 'An error occurred. Please try again.';
+        errorList.appendChild(li);
+        errorMessage.classList.remove('hidden');
+        showToast('Connection error. Please try again.', 'error');
+        
+        // Reset button
+        registerButton.disabled = false;
+        registerButtonText.textContent = 'Create Account';
+        registerSpinner.classList.add('hidden');
     }
-  });
-})();
+});
 </script>
 {% endblock content %}

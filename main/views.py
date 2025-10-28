@@ -52,7 +52,7 @@ def add_product_entry_ajax(request):
     thumbnail = request.POST.get("thumbnail")
     is_featured = request.POST.get("is_featured") == 'on'
     price = request.POST.get("price")   
-    user = request.user
+    user = requesedit.user
 
     new_product = Product(
         name=name,
@@ -210,35 +210,49 @@ def register(request):
 @csrf_protect
 def register_ajax(request):
     username = (request.POST.get('username') or '').strip()
-    password = (request.POST.get('password') or '').strip()
+    password1 = (request.POST.get('password1') or '').strip()
     password2 = (request.POST.get('password2') or '').strip()
 
     errors = {}
+    
+    # Validasi
     if not username:
-        errors['username'] = 'Username wajib.'
-    if not password:
-        errors['password'] = 'Password wajib.'
-    if password != password2:
-        errors['password2'] = 'Password tidak sama.'
+        errors['username'] = ['Username is required']
+    elif len(username) < 3:
+        errors['username'] = ['Username must be at least 3 characters']
+    elif User.objects.filter(username=username).exists():
+        errors['username'] = ['Username already exists']
+    
+    if not password1:
+        errors['password1'] = ['Password is required']
+    elif len(password1) < 8:
+        errors['password1'] = ['Password must be at least 8 characters']
+    
+    if not password2:
+        errors['password2'] = ['Password confirmation is required']
+    elif password1 != password2:
+        errors['password2'] = ['Passwords do not match']
+    
     if errors:
-        return JsonResponse({'detail': 'INVALID_INPUT', 'errors': errors}, status=400)
+        return JsonResponse({
+            'status': 'error',
+            'errors': errors
+        }, status=400)
 
-    # uniqueness check for username only
-    if User.objects.filter(username=username).exists():
-        return JsonResponse({'detail': 'USERNAME_TAKEN', 'errors': {'username': 'Username sudah dipakai.'}}, status=400)
-
+    # Buat user baru
     try:
-        new_user = User.objects.create_user(username=username, password=password)
+        new_user = User.objects.create_user(username=username, password=password1)
         new_user.save()
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Registration successful'
+        })
     except Exception as e:
-        return JsonResponse({'detail': 'CREATE_FAILED', 'error': str(e)}, status=500)
-
-    # auto-login
-    user = authenticate(request, username=username, password=password)
-    if user:
-        login(request, user)
-
-    return JsonResponse({'detail': 'REGISTERED', 'redirect': '/'}, status=201)
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
 
 def login_user(request):
    if request.method == 'POST':
